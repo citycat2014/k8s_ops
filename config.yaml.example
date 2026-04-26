@@ -1,0 +1,109 @@
+# K8s 运维诊断智能体 - 配置文件示例
+# 复制此文件为 config.yaml 并根据需要修改
+
+# ============================================================================
+# LLM 配置
+# ============================================================================
+llm:
+  # LLM 提供商: openai (目前仅支持 openai 兼容格式)
+  provider: openai
+
+  # 模型名称
+  # 推荐: gpt-4o (能力强), gpt-4o-mini (速度快), gpt-4 (准确但慢)
+  model: gpt-4o
+
+  # 温度参数: 0.0-2.0
+  # 诊断任务建议低温度以获得确定性输出
+  # 0.0 = 最确定, 1.0 = 标准, 2.0 = 最随机
+  temperature: 0.1
+
+  # API 密钥
+  # 优先级: 此配置 > 环境变量 OPENAI_API_KEY
+  api_key: ""
+
+  # 自定义 API 基础地址 (可选)
+  # 用于 Azure OpenAI 或本地 vLLM/Ollama 等兼容服务
+  # 示例: "https://api.openai.com/v1" 或 "http://localhost:11434/v1"
+  base_url: ""
+
+# ============================================================================
+# Kubernetes 配置
+# ============================================================================
+k8s:
+  # kubeconfig 文件路径
+  # null = 使用默认 ~/.kube/config
+  # 或指定绝对路径: "/path/to/kubeconfig"
+  kubeconfig: null
+
+  # 默认 namespace
+  # 未指定 -n 参数时，Agent 会自动在所有 namespace 中查找 Pod
+  # 此配置仅用于回退场景
+  default_namespace: default
+
+  # 权限模式
+  # - read-only:  只允许 get/describe 等只读操作 (默认推荐)
+  # - diagnostic: + logs/exec/cp 等诊断操作
+  # - read-write: + delete/patch/scale 等修改操作 (谨慎使用)
+  mode: read-only
+
+  # 是否绕过关键字黑名单 (仅 read-write 模式下有效)
+  # 即使启用，全局黑名单 (--force, --grace-period=0) 仍然生效
+  bypass_blacklist: false
+
+# ============================================================================
+# Agent 配置
+# ============================================================================
+agent:
+  # 单次诊断最大工具调用次数
+  # 防止无限循环或过度消耗 token
+  max_tool_calls: 20
+
+  # 单次诊断超时时间 (秒)
+  timeout_seconds: 120
+
+  # 是否显示排查思维链
+  # true = 显示每一步推理过程 (推荐)
+  # false = 只输出最终诊断报告
+  show_thoughts: true
+
+  # 是否启用上下文压缩
+  # true = 压缩思维链上下文，减少 token 使用约 40-50%
+  # false = 保留完整思维链
+  context_compression: true
+
+# ============================================================================
+# 知识库配置
+# ============================================================================
+knowledge:
+  # 是否启用知识库 RAG
+  enabled: true
+
+  # 知识库目录路径
+  # 相对路径基于当前工作目录，或指定绝对路径
+  knowledge_dir: knowledge
+
+  # 单次查询最大检索文档数
+  max_results: 3
+
+  # 最小相关性分数阈值 (TF-IDF 分数)
+  # 低于此分数的文档不会注入上下文
+  min_score: 0.01
+
+  # 最大注入字符数
+  # 防止知识库内容过长消耗过多 token
+  max_injected_chars: 4000
+
+# ============================================================================
+# 使用示例
+# ============================================================================
+# 1. 基础使用 (使用环境变量 OPENAI_API_KEY):
+#    k8s-diagnose "排查 my-pod 启动失败"
+#
+# 2. 指定配置文件:
+#    k8s-diagnose --config config.yaml "排查 my-pod 启动失败"
+#
+# 3. 交互模式:
+#    k8s-diagnose -i --config config.yaml
+#
+# 4. 指定 namespace 和权限模式 (命令行覆盖配置):
+#    k8s-diagnose -n production --mode diagnostic "排查 my-pod"
