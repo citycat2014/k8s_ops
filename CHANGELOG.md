@@ -1,5 +1,16 @@
 # 变更日志
 
+## v0.1.1 (2026-04-26)
+
+### 新增知识库文档
+
+- **Volcano GPU 调度故障排查** (`knowledge/error-patterns/volcano-gpu-scheduling.md`)
+  - Gang 调度死锁诊断与解决
+  - GPU 配额不足排查
+  - vGPU 内存分配失败处理
+  - GPU 碎片化问题优化
+  - 优先级抢占失败分析
+
 ## v0.1.0 (2026-04-26)
 
 ### 技术栈变更
